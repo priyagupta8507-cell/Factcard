@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fact Image Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700;800;900&family=Noto+Serif+Devanagari:wght@400;600;700;800;900&family=Hind:wght@400;500;600;700&family=Mukta:wght@400;600;700;800&family=Baloo+2:wght@400;600;700;800&family=Rajdhani:wght@400;600;700&family=Khand:wght@400;600;700&family=Teko:wght@400;600;700&family=Kalam:wght@400;700&family=Laila:wght@400;600;700&family=Martel:wght@400;700;800;900&family=Palanquin+Dark:wght@400;600;700&family=Yatra+One&family=Tiro+Devanagari+Hindi&family=Eczar:wght@400;600;700;800&family=Karma:wght@400;600;700&family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@400;700;800;900&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Playfair+Display:wght@700;800;900&family=Pacifico&family=Anton&family=Righteous&family=Permanent+Marker&family=Archivo+Black&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0e0f12; --panel: #16181d; --panel-2: #1d2027; --line: #2a2e37;
+    --text: #eef0f3; --sub: #9aa1ad; --amber: #f2b632; --green: #4fd67a; --red:#ff5c5c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Poppins',sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #1c1f26 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #1a2420 0%, transparent 55%), var(--bg);
+    color:var(--text); min-height:100vh;
+  }
+
+  /* ---------- AUTH SCREEN ---------- */
+  #authScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .auth-card{ width:380px; max-width:100%; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:28px 26px; }
+  .auth-logo{ text-align:center; font-size:20px; font-weight:800; margin-bottom:4px; }
+  .auth-logo span{color:var(--amber);}
+  .auth-sub{ text-align:center; color:var(--sub); font-size:12.5px; margin-bottom:22px; }
+  .tabs{ display:flex; background:var(--panel-2); border-radius:10px; padding:4px; margin-bottom:20px; }
+  .tab{ flex:1; text-align:center; padding:9px 0; font-size:13px; font-weight:600; border-radius:8px; cursor:pointer; color:var(--sub); }
+  .tab.active{ background:var(--amber); color:#181000; }
+  .form-group{ margin-bottom:14px; }
+  .form-group label{ display:block; font-size:12px; color:var(--sub); margin-bottom:6px; font-weight:600; }
+  .form-group input{ width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:9px; color:var(--text); padding:11px 13px; font-size:13.5px; font-family:'Poppins',sans-serif; }
+  .form-group input:focus{ outline:2px solid var(--amber); outline-offset:1px; }
+  .pw-wrap{ position:relative; }
+  .pw-toggle{ position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--sub); font-size:11.5px; cursor:pointer; }
+  .err-box{ background:rgba(255,92,92,0.1); border:1px solid rgba(255,92,92,0.4); color:#ff9a9a; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; display:none; }
+  .err-box.show{display:block;}
+  .ok-box{ background:rgba(79,214,122,0.1); border:1px solid rgba(79,214,122,0.4); color:#8ff0ac; font-size:12px; padding:9px 12px; border-radius:8px; margin-bottom:14px; display:none; }
+  .ok-box.show{display:block;}
+  .btn{ width:100%; padding:12px 16px; border-radius:10px; border:none; background:linear-gradient(135deg, var(--amber), #e08a1f); color:#181000; font-weight:700; font-size:14px; cursor:pointer; }
+  .btn:hover{filter:brightness(1.08);}
+  .btn.secondary{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); }
+  .divider{ display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--sub); font-size:11.5px; }
+  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+  .btn-google{ width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line); background:#fff; color:#222; font-weight:600; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; }
+  .btn-google svg{width:18px; height:18px;}
+  .pw-strength{ height:4px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
+  .pw-strength-bar{ height:100%; width:0%; background:var(--red); transition:.2s; }
+  .pw-hint{ font-size:11px; color:var(--sub); margin-top:5px; line-height:1.5; }
+  .gid-field{ margin-bottom:12px; }
+  .gid-field input{ font-size:12px; }
+  .gid-note{ font-size:10.5px; color:var(--sub); margin-top:5px; line-height:1.5; }
+
+  /* ---------- APP TOPBAR ---------- */
+  #appScreen{ display:none; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 32px; border-bottom:1px solid var(--line); }
+  .topbar-user{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--sub); }
+  .avatar{ width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--amber),#e08a1f); display:flex; align-items:center; justify-content:center; font-weight:800; color:#181000; font-size:13px; }
+  .logout-btn{ background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:8px 16px; border-radius:9px; font-size:12.5px; cursor:pointer; font-weight:600; }
+  .logout-btn:hover{border-color:var(--red); color:var(--red);}
+
+  header{ padding:26px 32px 16px; border-bottom:1px solid var(--line); }
+  header h1{ margin:0; font-size:22px; font-weight:800; }
+  header h1 span{color:var(--amber);}
+  header p{ margin:6px 0 0; color:var(--sub); font-size:13.5px; }
+  .wrap{ display:grid; grid-template-columns: 400px 1fr; align-items:start; }
+  @media (max-width:920px){ .wrap{grid-template-columns:1fr;} }
+  .controls{ padding:22px; border-right:1px solid var(--line); min-height:calc(100vh - 160px); max-height:calc(100vh - 160px); overflow-y:auto; }
+  .field{margin-bottom:18px;}
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--sub); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.6px; }
+  .dropzone{ border:1.5px dashed var(--line); border-radius:10px; padding:16px; text-align:center; cursor:pointer; background:var(--panel); font-size:13px; color:var(--sub); }
+  .dropzone:hover{border-color:var(--amber); color:var(--text);}
+  .dropzone.has-image{padding:8px;}
+  .dropzone img{max-width:100%; max-height:110px; border-radius:6px; display:block; margin:0 auto;}
+  input[type="file"]{display:none;}
+  textarea{ width:100%; min-height:120px; background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:12px 14px; font-family:'Noto Sans Devanagari',sans-serif; font-size:14.5px; line-height:1.6; resize:vertical; }
+  textarea:focus, input:focus, select:focus{outline:2px solid var(--amber); outline-offset:1px;}
+  input[type="text"]{ width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:10px 14px; font-family:'Poppins',sans-serif; font-size:13.5px; }
+  .hint{ font-size:11.5px; color:var(--sub); margin-top:6px; line-height:1.5; }
+  .hint b.y{color:var(--amber);} .hint b.g{color:var(--green);}
+  select{ width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:10px 12px; font-family:'Poppins',sans-serif; font-size:13.5px; }
+  .swatches{display:flex; gap:8px; flex-wrap:wrap;}
+  .swatch{ width:28px; height:28px; border-radius:8px; cursor:pointer; border:2px solid transparent; }
+  .swatch.active{border-color:#fff;}
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; }
+  .switch{ position:relative; width:40px; height:22px; }
+  .switch input{display:none;}
+  .slider{ position:absolute; inset:0; background:#3a3f4a; border-radius:20px; cursor:pointer; transition:.15s; }
+  .slider::before{ content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.15s; }
+  input:checked + .slider{background:var(--amber);}
+  input:checked + .slider::before{transform:translateX(18px);}
+  .btn-row{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .range-row{display:flex; align-items:center; gap:10px;}
+  input[type=range]{flex:1; accent-color:var(--amber);}
+  .rangeval{font-size:12px; color:var(--sub); min-width:42px; text-align:right;}
+  .preview-area{ display:flex; flex-direction:column; align-items:center; padding:36px 20px; }
+  #canvasWrap{ box-shadow:0 20px 60px rgba(0,0,0,0.5); border-radius:6px; overflow:hidden; line-height:0; max-width:100%; }
+  canvas{ max-width:100%; height:auto; display:block; background:#000; touch-action:none; cursor:grab; }
+  canvas.dragging{cursor:grabbing;}
+  .actions{ display:flex; gap:10px; margin-top:20px; width:100%; max-width:420px; }
+  .credit{ color:var(--sub); font-size:11.5px; margin-top:12px; text-align:center; max-width:420px; line-height:1.5; }
+  .drag-tip{ background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--sub); line-height:1.6; margin-bottom:18px;}
+  .drag-tip b{color:var(--amber);}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Fact<span>Card</span></div>
+    <div class="auth-sub">Apna account banao ya login karo</div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabLogin">Login</div>
+      <div class="tab" id="tabSignup">Sign Up</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
+      <div class="err-box" id="loginErr"></div>
+      <div class="ok-box" id="loginOk"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginUsername" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="loginPassword" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" data-target="loginPassword">SHOW</button>
+        </div>
+      </div>
+      <button type="submit" class="btn" id="loginSubmitBtn">Login</button>
+
+      <div class="divider">ya</div>
+      <button type="button" class="btn-google" id="googleLoginBtn">
+        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3c-7.7 0-14.3 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.6C29.6 35.9 26.9 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.6 5.1C9.6 40.5 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.6 5.6C39.6 37 44 31.1 44 24c0-1.4-.1-2.4-.4-3.5z"/></svg>
+        Sign in with Google
+      </button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signupForm" style="display:none;">
+      <div class="err-box" id="signupErr"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="signupUsername" autocomplete="username" required>
+        <div class="pw-hint">2-30 characters ka koi bhi naam (jaise "Prince Gupta")</div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" autocomplete="email" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="signupPassword" autocomplete="new-password" required>
+          <button type="button" class="pw-toggle" data-target="signupPassword">SHOW</button>
+        </div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="pwStrengthBar"></div></div>
+        <div class="pw-hint">Kam se kam 8 characters, ek letter aur ek number zaroor</div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="signupConfirm" autocomplete="new-password" required>
+          <button type="button" class="pw-toggle" data-target="signupConfirm">SHOW</button>
+        </div>
+      </div>
+      <button type="submit" class="btn" id="signupSubmitBtn">Sign Up</button>
+
+      <div class="divider">ya</div>
+      <button type="button" class="btn-google" id="googleSignupBtn">
+        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3c-7.7 0-14.3 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.6C29.6 35.9 26.9 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.6 5.1C9.6 40.5 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.6 5.6C39.6 37 44 31.1 44 24c0-1.4-.1-2.4-.4-3.5z"/></svg>
+        Sign up with Google
+      </button>
+    </form>
+
+    <div class="gid-note" style="margin-top:16px; text-align:center;">Powered by Firebase Authentication — sab devices se kaam karega.</div>
+  </div>
+</div>
+
+<!-- ================= MAIN APP ================= -->
+<div id="appScreen">
+  <div class="topbar">
+    <div class="topbar-user">
+      <div class="avatar" id="userAvatar">U</div>
+      <span id="userLabel">User</span>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </div>
+
+  <header>
+    <h1>Fact<span>Card</span> Generator</h1>
+    <p>Image drag/zoom karo, text ka font chuno, watermark ko kahin bhi rakho — sab kuch adjustable.</p>
+  </header>
+
+  <div class="wrap">
+    <div class="controls">
+
+      <div class="drag-tip">
+        🖱️ <b>Image</b> ko canvas par drag karke position set karo, zoom slider se size badlo.<br>
+        🏷️ <b>Watermark</b> text ko bhi seedha canvas par drag karke kahin bhi rakh sakte ho.
+      </div>
+
+      <div class="field">
+        <label>1. Background Image</label>
+        <div id="dropzone" class="dropzone">
+          <span id="dzText">Yahan click karo ya image drag-drop karo</span>
+          <img id="dzImg" style="display:none;">
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <div class="field">
+        <label>2. Image Zoom</label>
+        <div class="range-row">
+          <input type="range" id="zoomRange" min="100" max="300" value="100">
+          <span class="rangeval" id="zoomVal">100%</span>
+        </div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn secondary" id="resetImgBtn" type="button">Image Reset</button>
+          <button class="btn secondary" id="resetLogoBtn" type="button">Watermark Reset</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>3. Fact Text (Hindi)</label>
+        <textarea id="factText" placeholder="जैसे: पूर्वी अफ्रीका का देश *मेडागास्कर* एक ऐसा **देश** है...">पूर्वी अफ्रीका का देश *मेडागास्कर* एक ऐसा देश है जहाँ दुनिया के **90 प्रतिशत** ऐसे जानवर पाए जाते है, जो *दुनियाभर* में और कहीं नहीं है।</textarea>
+        <div class="hint">Highlight: <b class="y">*word*</b> = yellow, <b class="g">**word**</b> = green. Baaki text safed rahega.</div>
+      </div>
+
+      <div class="field">
+        <label>4. Text Font</label>
+        <select id="factFont"></select>
+      </div>
+
+      <div class="field">
+        <label>5. Watermark / Logo Text (optional)</label>
+        <input type="text" id="logoText" placeholder="jaise: YourPageName">
+      </div>
+
+      <div class="field">
+        <label>6. Watermark Font</label>
+        <select id="logoFont"></select>
+      </div>
+
+      <div class="field">
+        <label>7. Card Ratio</label>
+        <select id="aspectSelect">
+          <option value="1:1080:1080">Square 1:1</option>
+          <option value="4:5:1080:1350" selected>Portrait 4:5 (Instagram)</option>
+          <option value="3:4:1080:1440">Portrait 3:4</option>
+          <option value="2:3:1080:1620">Portrait 2:3</option>
+          <option value="9:16:1080:1920">Story / Reel 9:16</option>
+          <option value="5:4:1350:1080">Landscape 5:4</option>
+          <option value="4:3:1440:1080">Landscape 4:3</option>
+          <option value="3:2:1620:1080">Landscape 3:2</option>
+          <option value="16:9:1920:1080">Wide 16:9 (YouTube)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>8. Text Panel Height</label>
+        <select id="panelHeight">
+          <option value="0.42">Chhota</option>
+          <option value="0.52" selected>Medium</option>
+          <option value="0.62">Bada</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>9. Border Frame</label>
+        <div class="toggle-row">
+          <span style="font-size:13px;">Border ON/OFF</span>
+          <label class="switch">
+            <input type="checkbox" id="borderToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="swatches" id="borderSwatches" style="margin-top:10px;">
+          <div class="swatch active" data-color="#4fd67a" style="background:#4fd67a;"></div>
+          <div class="swatch" data-color="#f2b632" style="background:#f2b632;"></div>
+          <div class="swatch" data-color="#ff4d4d" style="background:#ff4d4d;"></div>
+          <div class="swatch" data-color="#4da6ff" style="background:#4da6ff;"></div>
+          <div class="swatch" data-color="#ffffff" style="background:#ffffff;"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="downloadBtn">Download PNG</button>
+      </div>
+    </div>
+
+    <div class="preview-area">
+      <div id="canvasWrap">
+        <canvas id="cv" width="1080" height="1350"></canvas>
+      </div>
+      <div class="credit">Sab kuch is device par hi banta hai — koi bhi image kahin upload nahi hoti. Login data hashed hokar artifact storage mein rehta hai.</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* =========================================================
+   AUTH SYSTEM — Firebase Authentication
+   Real backend auth: works from ANY device, for ANY friend,
+   as long as they open this same hosted page.
+   ========================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, updateProfile,
+  GoogleAuthProvider, signInWithPopup
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW_voj2W3N7LQ4Zzh7XntQSd7jqFD9ysE",
+  authDomain: "factcardapp.firebaseapp.com",
+  projectId: "factcardapp",
+  storageBucket: "factcardapp.firebasestorage.app",
+  messagingSenderId: "270710683866",
+  appId: "1:270710683866:web:2fc0d12222d38e65268de3"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+
+// ---------- UI wiring ----------
+const authScreen = document.getElementById('authScreen');
+const appScreen = document.getElementById('appScreen');
+const tabLogin = document.getElementById('tabLogin');
+const tabSignup = document.getElementById('tabSignup');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const loginErr = document.getElementById('loginErr');
+const signupErr = document.getElementById('signupErr');
+const loginOk = document.getElementById('loginOk');
+const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+
+tabLogin.addEventListener('click', () => {
+  tabLogin.classList.add('active'); tabSignup.classList.remove('active');
+  loginForm.style.display='block'; signupForm.style.display='none';
+});
+tabSignup.addEventListener('click', () => {
+  tabSignup.classList.add('active'); tabLogin.classList.remove('active');
+  signupForm.style.display='block'; loginForm.style.display='none';
+});
+
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.target);
+    if(target.type === 'password'){ target.type='text'; btn.textContent='HIDE'; }
+    else { target.type='password'; btn.textContent='SHOW'; }
+  });
+});
+
+const signupPassword = document.getElementById('signupPassword');
+const pwStrengthBar = document.getElementById('pwStrengthBar');
+signupPassword.addEventListener('input', () => {
+  const v = signupPassword.value;
+  let score = 0;
+  if(v.length >= 8) score++;
+  if(/[a-z]/.test(v) && /[A-Z]/.test(v)) score++;
+  if(/[0-9]/.test(v)) score++;
+  if(/[^a-zA-Z0-9]/.test(v)) score++;
+  const pct = (score/4)*100;
+  pwStrengthBar.style.width = pct + '%';
+  pwStrengthBar.style.background = score<=1 ? '#ff5c5c' : score===2 ? '#f2b632' : '#4fd67a';
+});
+
+function showErr(el, msg){ el.textContent = msg; el.classList.add('show'); }
+function hideErr(el){ el.classList.remove('show'); el.textContent=''; }
+function setBusy(btn, busy, label){ btn.disabled = busy; btn.textContent = busy ? 'Please wait...' : label; }
+
+// Friendly Hindi error messages for common Firebase error codes
+function friendlyError(err){
+  const code = err && err.code ? err.code : '';
+  const map = {
+    'auth/email-already-in-use': 'Ye email pehle se registered hai. Login karo.',
+    'auth/invalid-email': 'Email sahi format mein nahi hai.',
+    'auth/weak-password': 'Password kam se kam 6 characters ka ho.',
+    'auth/user-not-found': 'Is email se koi account nahi mila.',
+    'auth/wrong-password': 'Galat password.',
+    'auth/invalid-credential': 'Email ya password galat hai.',
+    'auth/too-many-requests': 'Bahut zyada attempts ho gaye. Thodi der baad try karo.',
+    'auth/network-request-failed': 'Internet connection check karo.',
+    'auth/unauthorized-domain': 'Ye domain Firebase mein authorized nahi hai — Authentication > Settings > Authorized domains mein isse add karna hoga.',
+    'auth/popup-closed-by-user': 'Google popup band ho gaya, dobara try karo.',
+    'auth/popup-blocked': 'Browser ne popup block kar diya — popup allow karke dobara try karo.'
+  };
+  return map[code] || (err && err.message ? err.message : 'Kuch galat ho gaya, dobara try karo.');
+}
+
+// ---------- Signup ----------
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideErr(signupErr);
+  const username = document.getElementById('signupUsername').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const confirm = document.getElementById('signupConfirm').value;
+
+  if(username.length < 2 || username.length > 30){
+    showErr(signupErr, 'Username 2-30 characters ka hona chahiye.'); return;
+  }
+  if(password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)){
+    showErr(signupErr, 'Password kam se kam 8 characters, ek letter aur ek number ke saath ho.'); return;
+  }
+  if(password !== confirm){
+    showErr(signupErr, 'Password aur Confirm Password match nahi ho rahe.'); return;
+  }
+
+  setBusy(signupSubmitBtn, true, 'Sign Up');
+  try{
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: username });
+    enterApp(cred.user.displayName || username, cred.user.email);
+  }catch(err){
+    showErr(signupErr, friendlyError(err));
+  }finally{
+    setBusy(signupSubmitBtn, false, 'Sign Up');
+  }
+});
+
+// ---------- Login ----------
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideErr(loginErr); loginOk.classList.remove('show');
+  const email = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  setBusy(loginSubmitBtn, true, 'Login');
+  try{
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    enterApp(cred.user.displayName || cred.user.email, cred.user.email);
+  }catch(err){
+    showErr(loginErr, friendlyError(err));
+  }finally{
+    setBusy(loginSubmitBtn, false, 'Login');
+  }
+});
+
+// ---------- Google Sign-In ----------
+function activeErrBox(){
+  // show the error in whichever tab (login/signup) is currently visible
+  return signupForm.style.display !== 'none' ? signupErr : loginErr;
+}
+async function startGoogleSignIn(triggerBtn){
+  const provider = new GoogleAuthProvider();
+  const errBox = activeErrBox();
+  hideErr(loginErr); hideErr(signupErr);
+  const originalText = triggerBtn.textContent.trim();
+  triggerBtn.disabled = true;
+  triggerBtn.textContent = 'Opening Google...';
+  try{
+    const result = await signInWithPopup(auth, provider);
+    enterApp(result.user.displayName || result.user.email, result.user.email);
+  }catch(err){
+    showErr(errBox, friendlyError(err));
+  }finally{
+    triggerBtn.disabled = false;
+    triggerBtn.textContent = originalText;
+  }
+}
+document.getElementById('googleLoginBtn').addEventListener('click', (e) => startGoogleSignIn(e.currentTarget));
+document.getElementById('googleSignupBtn').addEventListener('click', (e) => startGoogleSignIn(e.currentTarget));
+
+// ---------- Logout ----------
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.reload();
+});
+
+// ---------- Enter app ----------
+function enterApp(username, emailLabel){
+  authScreen.style.display = 'none';
+  appScreen.style.display = 'block';
+  const label = username || emailLabel || 'User';
+  document.getElementById('userLabel').textContent = label;
+  document.getElementById('userAvatar').textContent = label.charAt(0).toUpperCase();
+  initFactCardApp();
+}
+
+// ---------- Persisted session check (Firebase handles this automatically) ----------
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    enterApp(user.displayName || user.email, user.email);
+  } else {
+    authScreen.style.display = 'flex';
+  }
+});
+
+/* =========================================================
+   FACT CARD GENERATOR (unchanged logic + font-load fix)
+   ========================================================= */
+function initFactCardApp(){
+if(window.__factAppInit) { return; } // avoid double-init
+window.__factAppInit = true;
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+let bgImage = null;
+let borderOn = false;
+let borderColor = '#4fd67a';
+
+let imgZoom = 1;
+let imgDX = 0, imgDY = 0;
+let imgInitialized = false;
+
+let logoUserPositioned = false;
+let logoAnchorX = 0, logoAnchorY = 0;
+let lastLogoBox = null;
+
+let dragTarget = null;
+let dragStart = null;
+
+const fileInput = document.getElementById('fileInput');
+const dropzone = document.getElementById('dropzone');
+const dzImg = document.getElementById('dzImg');
+const dzText = document.getElementById('dzText');
+const factText = document.getElementById('factText');
+const aspectSelect = document.getElementById('aspectSelect');
+const panelHeight = document.getElementById('panelHeight');
+const borderToggle = document.getElementById('borderToggle');
+const logoText = document.getElementById('logoText');
+const zoomRange = document.getElementById('zoomRange');
+const zoomVal = document.getElementById('zoomVal');
+const factFontSel = document.getElementById('factFont');
+const logoFontSel = document.getElementById('logoFont');
+
+const FACT_FONTS = [
+  {label:'Noto Sans (Bold Default)', family:"'Noto Sans Devanagari'", weight:800},
+  {label:'Noto Serif (Elegant)', family:"'Noto Serif Devanagari'", weight:700},
+  {label:'Hind (Clean)', family:"'Hind'", weight:700},
+  {label:'Mukta (Rounded)', family:"'Mukta'", weight:800},
+  {label:'Baloo 2 (Bubbly)', family:"'Baloo 2'", weight:800},
+  {label:'Rajdhani (Tech)', family:"'Rajdhani'", weight:700},
+  {label:'Khand (Condensed)', family:"'Khand'", weight:700},
+  {label:'Teko (Tall Condensed)', family:"'Teko'", weight:700},
+  {label:'Kalam (Handwriting)', family:"'Kalam'", weight:700},
+  {label:'Laila (Soft Serif)', family:"'Laila'", weight:700},
+  {label:'Martel (Bold Serif)', family:"'Martel'", weight:900},
+  {label:'Palanquin Dark (Display)', family:"'Palanquin Dark'", weight:700},
+  {label:'Yatra One (Decorative)', family:"'Yatra One'", weight:400},
+  {label:'Tiro Devanagari (Classic)', family:"'Tiro Devanagari Hindi'", weight:400},
+  {label:'Eczar (Bold Display)', family:"'Eczar'", weight:800},
+  {label:'Karma (Traditional)', family:"'Karma'", weight:700},
+];
+
+const LOGO_FONTS = [
+  {label:'Poppins', family:"'Poppins'", weight:700},
+  {label:'Montserrat', family:"'Montserrat'", weight:800},
+  {label:'Bebas Neue', family:"'Bebas Neue'", weight:400},
+  {label:'Oswald', family:"'Oswald'", weight:700},
+  {label:'Playfair Display', family:"'Playfair Display'", weight:800},
+  {label:'Pacifico (Script)', family:"'Pacifico'", weight:400},
+  {label:'Anton (Impact)', family:"'Anton'", weight:400},
+  {label:'Righteous', family:"'Righteous'", weight:400},
+  {label:'Permanent Marker', family:"'Permanent Marker'", weight:400},
+  {label:'Archivo Black', family:"'Archivo Black'", weight:400},
+  {label:'Space Grotesk', family:"'Space Grotesk'", weight:700},
+  {label:'Baloo 2 (Hindi)', family:"'Baloo 2'", weight:700},
+  {label:'Yatra One (Hindi)', family:"'Yatra One'", weight:400},
+  {label:'Hind (Hindi)', family:"'Hind'", weight:700},
+  {label:'Kalam (Hindi Handwriting)', family:"'Kalam'", weight:700},
+];
+
+function populateFontSelect(sel, list, defaultIndex){
+  list.forEach((f, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = f.label;
+    opt.style.fontFamily = f.family;
+    if(i === defaultIndex) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+populateFontSelect(factFontSel, FACT_FONTS, 8); // default: Kalam
+populateFontSelect(logoFontSel, LOGO_FONTS, 0);
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.borderColor = '#f2b632'; });
+dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = ''; });
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.style.borderColor = '';
+  if(e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if(e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+function loadFile(file){
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      bgImage = img;
+      dzImg.src = ev.target.result;
+      dzImg.style.display = 'block';
+      dzText.style.display = 'none';
+      dropzone.classList.add('has-image');
+      imgInitialized = false;
+      imgZoom = 1;
+      zoomRange.value = 100;
+      zoomVal.textContent = '100%';
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('borderSwatches').addEventListener('click', e => {
+  const sw = e.target.closest('.swatch');
+  if(!sw) return;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  sw.classList.add('active');
+  borderColor = sw.dataset.color;
+  render();
+});
+
+borderToggle.addEventListener('change', () => { borderOn = borderToggle.checked; render(); });
+factText.addEventListener('input', render);
+aspectSelect.addEventListener('change', () => { imgInitialized = false; render(); });
+panelHeight.addEventListener('change', () => { imgInitialized = false; render(); });
+logoText.addEventListener('input', render);
+
+factFontSel.addEventListener('change', async () => {
+  const f = FACT_FONTS[parseInt(factFontSel.value,10)];
+  await document.fonts.load(`${f.weight} 60px ${f.family}`, 'नमस्ते Aa123');
+  render();
+});
+logoFontSel.addEventListener('change', async () => {
+  const f = LOGO_FONTS[parseInt(logoFontSel.value,10)];
+  await document.fonts.load(`${f.weight} 60px ${f.family}`, 'नमस्ते Aa123');
+  render();
+});
+
+zoomRange.addEventListener('input', () => {
+  imgZoom = parseInt(zoomRange.value,10)/100;
+  zoomVal.textContent = zoomRange.value + '%';
+  render();
+});
+
+document.getElementById('resetImgBtn').addEventListener('click', () => {
+  imgInitialized = false; imgZoom = 1; zoomRange.value = 100; zoomVal.textContent = '100%'; render();
+});
+document.getElementById('resetLogoBtn').addEventListener('click', () => {
+  logoUserPositioned = false; render();
+});
+
+function getDims(){
+  const parts = aspectSelect.value.split(':');
+  return { w: parseInt(parts[2],10), h: parseInt(parts[3],10) };
+}
+
+function parseSegments(text){
+  const tokens = [];
+  const regex = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)/g;
+  let lastIndex = 0, m;
+  while((m = regex.exec(text)) !== null){
+    if(m.index > lastIndex) tokens.push({text: text.slice(lastIndex, m.index), color:'white'});
+    if(m[1]) tokens.push({text: m[2], color:'green'});
+    else if(m[3]) tokens.push({text: m[4], color:'yellow'});
+    lastIndex = regex.lastIndex;
+  }
+  if(lastIndex < text.length) tokens.push({text: text.slice(lastIndex), color:'white'});
+  return tokens;
+}
+
+function wrapTokens(ctx, tokens, maxWidth){
+  const words = [];
+  tokens.forEach(tok => {
+    tok.text.split(/(\s+)/).filter(p => p.length>0).forEach(p => words.push({text:p, color:tok.color}));
+  });
+  const lines = [];
+  let currentLine = [], currentWidth = 0;
+  words.forEach(w => {
+    if(/^\s+$/.test(w.text)){
+      const spaceW = ctx.measureText(' ').width;
+      if(currentWidth + spaceW <= maxWidth){ currentLine.push(w); currentWidth += spaceW; }
+      return;
+    }
+    const wWidth = ctx.measureText(w.text).width;
+    if(currentWidth + wWidth > maxWidth && currentLine.length > 0){
+      lines.push(currentLine); currentLine = [w]; currentWidth = wWidth;
+    } else { currentLine.push(w); currentWidth += wWidth; }
+  });
+  if(currentLine.length) lines.push(currentLine);
+  return lines.map(line => {
+    while(line.length && /^\s+$/.test(line[0].text)) line.shift();
+    while(line.length && /^\s+$/.test(line[line.length-1].text)) line.pop();
+    return line;
+  });
+}
+
+function colorFor(name){
+  if(name === 'yellow') return '#f7c948';
+  if(name === 'green') return '#5be888';
+  return '#ffffff';
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+function render(){
+  const {w, h} = getDims();
+  cv.width = w; cv.height = h;
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,w,h);
+
+  const panelRatio = parseFloat(panelHeight.value);
+  const imageAreaH = h * (1 - panelRatio);
+
+  if(bgImage){
+    const iw = bgImage.width, ih = bgImage.height;
+    const targetW = w, targetH = imageAreaH;
+    const baseScale = Math.max(targetW/iw, targetH/ih);
+    const scale = baseScale * imgZoom;
+    const drawW = iw*scale, drawH = ih*scale;
+    const minX = Math.min(0, targetW - drawW), maxX = 0;
+    const minY = Math.min(0, targetH - drawH), maxY = 0;
+
+    if(!imgInitialized){
+      imgDX = (targetW - drawW)/2;
+      imgDY = (targetH - drawH)/2;
+      imgInitialized = true;
+    } else {
+      imgDX = clamp(imgDX, minX, maxX);
+      imgDY = clamp(imgDY, minY, maxY);
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0,0,targetW,targetH);
+    ctx.clip();
+    ctx.drawImage(bgImage, imgDX, imgDY, drawW, drawH);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0,0,w,imageAreaH);
+    ctx.fillStyle = '#555';
+    ctx.font = '32px Poppins';
+    ctx.textAlign = 'center';
+    ctx.fillText('Image upload karo', w/2, imageAreaH/2);
+  }
+
+  const fadeStart = imageAreaH - imageAreaH*0.35;
+  const grad = ctx.createLinearGradient(0, fadeStart, 0, imageAreaH + 10);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(0,0,0,1)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, fadeStart, w, imageAreaH - fadeStart + 10);
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, imageAreaH, w, h - imageAreaH);
+
+  const logo = logoText.value.trim();
+  lastLogoBox = null;
+  if(logo){
+    const lf = LOGO_FONTS[parseInt(logoFontSel.value || 0,10)];
+    const logoFontSize = Math.round(w * 0.028);
+    ctx.font = `${lf.weight} ${logoFontSize}px ${lf.family}`;
+    const textW = ctx.measureText(logo).width;
+
+    if(!logoUserPositioned){
+      logoAnchorX = w - 30;
+      logoAnchorY = imageAreaH - 24;
+    }
+
+    ctx.save();
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(logo, logoAnchorX, logoAnchorY);
+    ctx.restore();
+
+    lastLogoBox = {
+      x1: logoAnchorX - textW - 14, y1: logoAnchorY - logoFontSize - 6,
+      x2: logoAnchorX + 14, y2: logoAnchorY + 12
+    };
+  }
+
+  const raw = factText.value || '';
+  const tokens = parseSegments(raw);
+  const paddingX = w * 0.07;
+  const maxWidth = w - paddingX*2;
+  const ff = FACT_FONTS[parseInt(factFontSel.value || 0,10)];
+  let fontSize = Math.round(w * 0.042);
+  let lh = fontSize * 1.55;
+
+  ctx.font = `${ff.weight} ${fontSize}px ${ff.family}`;
+  let lines = wrapTokens(ctx, tokens, maxWidth);
+
+  const panelH = h - imageAreaH;
+  const availTextH = panelH - panelH*0.16;
+  let iterations = 0;
+  while(lines.length * lh > availTextH && fontSize > 20 && iterations < 15){
+    fontSize -= 2;
+    lh = fontSize * 1.55;
+    ctx.font = `${ff.weight} ${fontSize}px ${ff.family}`;
+    lines = wrapTokens(ctx, tokens, maxWidth);
+    iterations++;
+  }
+
+  ctx.font = `${ff.weight} ${fontSize}px ${ff.family}`;
+  ctx.textBaseline = 'alphabetic';
+
+  const totalTextH = lines.length * lh;
+  let startY = imageAreaH + (panelH - totalTextH)/2 + fontSize*0.75;
+
+  lines.forEach(line => {
+    let lineWidth = 0;
+    line.forEach(tok => { lineWidth += ctx.measureText(tok.text).width; });
+    let x = (w - lineWidth)/2;
+    line.forEach(tok => {
+      ctx.fillStyle = colorFor(tok.color);
+      ctx.textAlign = 'left';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(tok.text, x, startY);
+      x += ctx.measureText(tok.text).width;
+    });
+    startY += lh;
+  });
+  ctx.shadowBlur = 0;
+
+  if(borderOn){
+    const bw = Math.round(w*0.012);
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = bw;
+    ctx.strokeRect(bw/2, bw/2, w-bw, h-bw);
+  }
+}
+
+function toCanvasCoords(e){
+  const rect = cv.getBoundingClientRect();
+  const scaleX = cv.width / rect.width;
+  const scaleY = cv.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+cv.addEventListener('pointerdown', e => {
+  const {x, y} = toCanvasCoords(e);
+  const panelRatio = parseFloat(panelHeight.value);
+  const {h} = getDims();
+  const imageAreaH = h * (1 - panelRatio);
+
+  if(lastLogoBox && x >= lastLogoBox.x1 && x <= lastLogoBox.x2 && y >= lastLogoBox.y1 && y <= lastLogoBox.y2){
+    dragTarget = 'logo';
+    dragStart = { x, y, ax: logoAnchorX, ay: logoAnchorY };
+  } else if(bgImage && y < imageAreaH){
+    dragTarget = 'image';
+    dragStart = { x, y, dx: imgDX, dy: imgDY };
+  } else {
+    dragTarget = null;
+  }
+  if(dragTarget){
+    cv.setPointerCapture(e.pointerId);
+    cv.classList.add('dragging');
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  if(!dragTarget) return;
+  const {x, y} = toCanvasCoords(e);
+  const deltaX = x - dragStart.x, deltaY = y - dragStart.y;
+  if(dragTarget === 'image'){
+    imgDX = dragStart.dx + deltaX;
+    imgDY = dragStart.dy + deltaY;
+  } else if(dragTarget === 'logo'){
+    logoAnchorX = dragStart.ax + deltaX;
+    logoAnchorY = dragStart.ay + deltaY;
+    logoUserPositioned = true;
+  }
+  render();
+});
+
+function endDrag(){ dragTarget = null; cv.classList.remove('dragging'); }
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('pointerleave', endDrag);
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'fact-card.png';
+  link.href = cv.toDataURL('image/png');
+  link.click();
+});
+
+// Preload every font (with Devanagari sample text) before first paint —
+// this is the fix for "all fonts look the same" (fonts weren't fetched yet).
+async function preloadAllFonts(){
+  const sample = 'नमस्ते Hindi Aa123';
+  const jobs = [];
+  FACT_FONTS.forEach(f => jobs.push(document.fonts.load(`${f.weight} 60px ${f.family}`, sample).catch(()=>{})));
+  LOGO_FONTS.forEach(f => jobs.push(document.fonts.load(`${f.weight} 60px ${f.family}`, sample).catch(()=>{})));
+  await Promise.all(jobs);
+}
+
+preloadAllFonts().then(() => { document.fonts.ready.then(render); });
+setTimeout(render, 400);
+render();
+
+} // end initFactCardApp
+</script>
+
+</body>
+</html>
